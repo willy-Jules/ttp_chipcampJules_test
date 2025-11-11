@@ -1,41 +1,104 @@
-module vga(
-	   input  clk,
-	   input  rst,
-           input  left_up,
-           input  left_down,
-           input  right_up,
-           input  right_down,
-           input  score_reset,
-           input  speed_lsb,
-           input  speed_msb,
-	   output r0,
-	   output r1,
-	   output r2,
-	   output r3,
-	   output g0,
-	   output g1,
-	   output g2,
-	   output g3,
-	   output b0,
-	   output b1,
-	   output b2,
-	   output b3,
-	   output hs,
-	   output vs
-	   );
+//============================================================
+// VGA_TOP.v
+// Self-contained VGA generator module with 12-bit RGB+position output
+// Resolution: 640x480 @ 60Hz (25 MHz pixel clock)
+//============================================================
 
-   assign r0 = red;
-   assign r1 = red;
-   assign r2 = red;
-   assign r3 = red;
-   assign b0 = blu;
-   assign b1 = blu;
-   assign b2 = blu;
-   assign b3 = blu;
-   assign g0 = grn;
-   assign g1 = grn;
-   assign g2 = grn;
-   assign g3 = grn;
-   assign hs = !hs_out;
-   assign vs = !vs_out;
+`timescale 1ns / 1ps
 
+module VGA_TOP (
+    input  wire clk_pixel,    // 25 MHz pixel clock
+    input  wire reset_n,      // active-low reset
+    output reg  hsync,        // VGA horizontal sync
+    output reg  vsync,        // VGA vertical sync
+    output wire visible,      // high when inside visible region
+    output wire [11:0] data_out // 12-bit bus: RGB + location info
+);
+
+    //------------------------------------------------------------
+    // VGA timing parameters (640x480 @ 60Hz)
+    //------------------------------------------------------------
+    localparam H_VISIBLE      = 640;
+    localparam H_FRONT_PORCH  = 16;
+    localparam H_SYNC_PULSE   = 96;
+    localparam H_BACK_PORCH   = 48;
+    localparam H_TOTAL        = H_VISIBLE + H_FRONT_PORCH + H_SYNC_PULSE + H_BACK_PORCH;
+
+    localparam V_VISIBLE      = 480;
+    localparam V_FRONT_PORCH  = 10;
+    localparam V_SYNC_PULSE   = 2;
+    localparam V_BACK_PORCH   = 33;
+    localparam V_TOTAL        = V_VISIBLE + V_FRONT_PORCH + V_SYNC_PULSE + V_BACK_PORCH;
+
+    //------------------------------------------------------------
+    // Counters
+    //------------------------------------------------------------
+    reg [11:0] h_count = 0;
+    reg [11:0] v_count = 0;
+
+    //------------------------------------------------------------
+    // Generate VGA timing
+    //------------------------------------------------------------
+    always @(posedge clk_pixel or negedge reset_n) begin
+        if (!reset_n) begin
+            h_count <= 0;
+            v_count <= 0;
+            hsync   <= 1;
+            vsync   <= 1;
+        end else begin
+            // Horizontal counter
+            if (h_count == H_TOTAL - 1) begin
+                h_count <= 0;
+                // Vertical counter
+                if (v_count == V_TOTAL - 1)
+                    v_count <= 0;
+                else
+                    v_count <= v_count + 1;
+            end else begin
+                h_count <= h_count + 1;
+            end
+
+            // Generate HSYNC (active low)
+            if (h_count >= H_VISIBLE + H_FRONT_PORCH &&
+                h_count <  H_VISIBLE + H_FRONT_PORCH + H_SYNC_PULSE)
+                hsync <= 0;
+            else
+                hsync <= 1;
+
+            // Generate VSYNC (active low)
+            if (v_count >= V_VISIBLE + V_FRONT_PORCH &&
+                v_count <  V_VISIBLE + V_FRONT_PORCH + V_SYNC_PULSE)
+                vsync <= 0;
+            else
+                vsync <= 1;
+        end
+    end
+
+    //------------------------------------------------------------
+    // Visible area and pixel coordinates
+    //------------------------------------------------------------
+    wire [9:0] x = (h_count < H_VISIBLE) ? h_count[9:0] : 10'd0;
+    wire [8:0] y = (v_count < V_VISIBLE) ? v_count[8:0] : 9'd0;
+    assign visible = (h_count < H_VISIBLE) && (v_count < V_VISIBLE);
+
+    //------------------------------------------------------------
+    // Simple test pattern RGB generation
+    //------------------------------------------------------------
+    wire [7:0] rgb8;
+    assign rgb8[7:5] = x[9:7];            // Red (3 bits)
+    assign rgb8[4:2] = y[8:6];            // Green (3 bits)
+    assign rgb8[1:0] = x[6:5] ^ y[5:4];   // Blue (2 bits)
+
+    //------------------------------------------------------------
+    // Pack RGB + position into 12-bit output
+    //------------------------------------------------------------
+    // Default packing (12 pins total):
+    // data_out[11:4] = RGB (8 bits)
+    // data_out[3:2]  = X[9:8]  (2 bits coarse X)
+    // data_out[1:0]  = Y[8:7]  (2 bits coarse Y)
+    //------------------------------------------------------------
+    assign data_out[11:4] = rgb8;
+    assign data_out[3:2]  = x[9:8];
+    assign data_out[1:0]  = y[8:7];
+
+endmodule
