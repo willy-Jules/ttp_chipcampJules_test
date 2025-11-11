@@ -21,8 +21,10 @@ module tt_um_WillyJules_chipbootcamp (
   // Coordinates
   reg [3:0] x0, y0, x1, y1;
   reg [3:0] x, y;
-  reg [4:0] dx, dy, err, sx, sy; // 5 bits to prevent overflow
+  reg [4:0] dx, dy, err;
+  reg signed [4:0] sx, sy;   // signed to handle -1
   reg done;
+  reg [4:0] e2;               // moved outside always
 
   always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
@@ -44,16 +46,15 @@ module tt_um_WillyJules_chipbootcamp (
       done <= 0;
     end else if (!done) begin
       // Output current coordinate
-      uo_out <= {x, y};  // Assign to uo_out (which is now a reg)
+      uo_out <= {x, y};
 
       if ((x == x1) && (y == y1)) begin
         done <= 1;
       end else begin
-        reg [4:0] e2;
         e2 = err;
         if (e2 > -dx) begin
           err <= err - dy;
-          x <= x + sx[0]; // convert sx to 0/1
+          x <= x + sx[0];
         end
         if (e2 < dy) begin
           err <= err + dx;
@@ -62,6 +63,7 @@ module tt_um_WillyJules_chipbootcamp (
       end
     end
   end
+
   // List all unused inputs to prevent warnings
   wire _unused = &{ena, clk, rst_n, 1'b0};
 
