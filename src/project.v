@@ -16,7 +16,18 @@ module tt_um_WillyJules_chipbootcamp (
     input  wire       rst_n     // reset_n - low to reset
 );
 
-assign uio_out = 0;
+module tt_um_WillyJules_chipbootcamp (
+    input  wire [7:0] ui_in,    
+    output reg  [7:0] uo_out,   // Change 'wire' to 'reg'
+    input  wire [7:0] uio_in,   
+    output wire [7:0] uio_out,  
+    output wire [7:0] uio_oe,   
+    input  wire       ena,      
+    input  wire       clk,      
+    input  wire       rst_n     
+);
+
+  assign uio_out = 0;
   assign uio_oe  = 0;
 
   // Coordinates
@@ -45,7 +56,7 @@ assign uio_out = 0;
       done <= 0;
     end else if (!done) begin
       // Output current coordinate
-      uo_out <= {x, y};
+      uo_out <= {x, y};  // Assign to uo_out (which is now a reg)
 
       if ((x == x1) && (y == y1)) begin
         done <= 1;
