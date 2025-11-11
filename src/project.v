@@ -15,54 +15,10 @@ module tt_um_WillyJules_chipbootcamp (
     input  wire       clk,      // clock
     input  wire       rst_n     // reset_n - low to reset
 );
+ // All output pins must be assigned. If not used, assign to 0.
+  assign uo_out  = ui_in + uio_in;  // Example: ou_out is the sum of ui_in and uio_in
   assign uio_out = 0;
   assign uio_oe  = 0;
-
-  // Coordinates
-  reg [3:0] x0, y0, x1, y1;
-  reg [3:0] x, y;
-  reg [4:0] dx, dy, err;
-  reg signed [4:0] sx, sy;   // signed to handle -1
-  reg done;
-  reg [4:0] e2;               // moved outside always
-
-  always @(posedge clk or negedge rst_n) begin
-    if (!rst_n) begin
-      x0 <= ui_in[7:4];
-      y0 <= ui_in[3:0];
-      x1 <= uio_in[7:4];
-      y1 <= uio_in[3:0];
-
-      x <= ui_in[7:4];
-      y <= ui_in[3:0];
-
-      dx <= (uio_in[7:4] > ui_in[7:4]) ? (uio_in[7:4] - ui_in[7:4]) : (ui_in[7:4] - uio_in[7:4]);
-      dy <= (uio_in[3:0] > ui_in[3:0]) ? (uio_in[3:0] - ui_in[3:0]) : (ui_in[3:0] - uio_in[3:0]);
-      
-      sx <= (ui_in[7:4] < uio_in[7:4]) ? 1 : -1;
-      sy <= (ui_in[3:0] < uio_in[3:0]) ? 1 : -1;
-
-      err <= (dx > dy) ? (dx >> 1) : -(dy >> 1);
-      done <= 0;
-    end else if (!done) begin
-      // Output current coordinate
-      uo_out <= {x, y};
-
-      if ((x == x1) && (y == y1)) begin
-        done <= 1;
-      end else begin
-        e2 = err;
-        if (e2 > -dx) begin
-          err <= err - dy;
-          x <= x + sx[0];
-        end
-        if (e2 < dy) begin
-          err <= err + dx;
-          y <= y + sy[0];
-        end
-      end
-    end
-  end
 
   // List all unused inputs to prevent warnings
   wire _unused = &{ena, clk, rst_n, 1'b0};
