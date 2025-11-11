@@ -1,7 +1,7 @@
 //============================================================
 // VGA Module.v
 // VGA generator with 12-bit RGB+position output
-// Highlights one pixel if it matches a stored register coordinate
+// Highlights one pixel if it matches a stored register coordinates
 //============================================================
 
 `timescale 1ns / 1ps
