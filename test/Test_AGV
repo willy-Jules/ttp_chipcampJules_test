@@ -3,7 +3,7 @@ from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles
 
 @cocotb.test()
-async def test_my_module(dut):
+async def test_VGA_Module(dut):
     """Test for my_module.v"""
     dut._log.info("Starting test for my_module")
 
