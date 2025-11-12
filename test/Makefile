@@ -37,7 +37,7 @@ COMPILE_ARGS 		+= -I$(SRC_DIR)
 # VERILOG_SOURCES += $(PWD)/tb.v    # ← Commented out since Cocotb test replaces it
 
 # Cocotb simulation targets:
-TOPLEVEL = VGA_Module              # ← This is your DUT module name
+TOPLEVEL = VGA_Module.v              # ← This is your DUT module name
 MODULE = test_vga_module           # ← This matches your Python test file (no .py)
 COCOTB_TEST_MODULES = test_vga_module
 
