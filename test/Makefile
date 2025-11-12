@@ -5,7 +5,7 @@
 SIM ?= icarus
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = VGA.v   # ← Changed from project.v
+PROJECT_SOURCES = VGA_Module.v   # ← Changed from project.v
 
 ifneq ($(GATES),yes)
 
